@@ -25,9 +25,8 @@
     <!--SCENES-->
     <script src="js/scenes/GameMenu.js"></script>
     <script src="js/scenes/Game.js"></script>
-    <script src="js/scenes/Level2.js"></script>
-    <script src="js/scenes/Level3.js"></script>
     <script src="js/scenes/GameOver.js"></script>
+    <script src="js/scenes/GameWin.js"></script>
 
     <!--MANAGERS-->
     <script src="js/classes/managers/AssetManager.js"></script>
@@ -44,15 +43,16 @@
     <script src="js/classes/sprites/Missile.js"></script>
     <script src="js/classes/sprites/Meteor.js"></script>
     <script src="js/classes/sprites/Boss.js"></script>
+    <script src="js/classes/sprites/FinalExplosion.js"></script>
 
     <!--APPLICATION-->
     <script src="js/SpacePatrol.js"></script>
 
 </head>
 
-<body onload="init();">
+<body onload="init();" style="background-color: black">
     <!-- <img src="img/bg_3.jpg" style="position: absolute"> -->
-    <canvas id="canvas" style="background-color: black" width="800" height="800" style="position: absolute"></canvas>
+    <canvas id="canvas" width="800" height="800" style="position: absolute"></canvas>
 </body>
 
 <script>

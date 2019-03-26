@@ -23,20 +23,20 @@
     p.enemyBulletPool = null;
     p.enemyBullets = null;
     p.enemyLastSpawnTime = null;
-    p.enemySpawnWaiter = 2000;
+    p.enemySpawnWaiter = 1000; //2000;
 
     // Bosses
     p.boss = null;
     p.bossLastSpawnTime = 0;
     p.bossLastSpawnPoints = 0;
-    p.bossSpawnWaiter = 400; //10000;
+    p.bossSpawnWaiter = 200; //400; //10000;
     p.nextBossShip = 0;
 
     // Meteors
     p.meteorPool = null;
     p.meteor = null;
     p.meteorLastSpawnTime = null;
-    p.meteorSpawnWaiter = 3000;
+    p.meteorSpawnWaiter = 700;
 
 
     // SPRITES
@@ -63,14 +63,21 @@
     p.upKeyDown = false;
     p.downKeyDown = false;
 
+    //level
+    p.level = 1;
+    p.levelup = false;
+
+    //background
+    p.bg = null;
+
     p.initialize = function() {
         this.Container_initialize();
         this.setProperties();
-        this.buildStarField();
+        this.buildBackground();
         this.buildSprites();
         this.setWalls();
         this.setControls();
-        createjs.Sound.play(game.assets.SOUNDTRACK1);
+        createjs.Sound.play(game.assets.SOUNDTRACK);
     }
     p.setProperties = function() {
         this.heroBulletPool = [];
@@ -85,25 +92,21 @@
         this.betweenLevels = false;
         this.enemyLastSpawnTime = 0;
         this.bossLastSpawnTime = 0;
-        this.nextBossShip = 0;
         this.meteorPool = [];
         this.meteors = [];
         this.meteorLastSpawnTime = 0;
+        this.nextBossShip = 0;
     }
-    p.buildStarField = function() {
-        var star, alpha;
-        var numStars = 20;
-        for (i = 0; i < numStars; i++) {
-            star = new createjs.Shape();
-            star.graphics.beginFill("#FFFFFF").drawCircle(0, 0, 2);
-            star.speed = Utils.getRandomNumber(100, 200);
-            star.x = Math.random() * screen_width;
-            star.y = Math.random() * screen_height;
-            alpha = Math.random();
-            star.alpha = alpha;
-            this.addChild(star);
-            this.stars.push(star);
-        }
+    p.buildBackground = function() {
+
+        var url = "img/bg.jpg";
+        this.bg = new createjs.Bitmap(url);
+        this.bg.scaleX = 1.25; //scale background to 800px
+
+        this.addChild(this.bg);
+
+        this.bg.y = -10240;
+
     }
     p.buildSprites = function() {
         this.heroShip = new game.HeroShip();
@@ -111,16 +114,16 @@
         this.heroShip.x = screen_width / 2;
         this.heroShip.y = screen_height - this.heroShip.getBounds().height;
         this.heroBulletPool = new game.SpritePool(game.Bullet, 20);
-        this.heroMissilePool = new game.SpritePool(game.Missile, 7);
-        this.enemyBulletPool = new game.SpritePool(game.Bullet, 20);
-        this.enemyPool = new game.SpritePool(game.EnemyShip, 10);
+        this.heroMissilePool = new game.SpritePool(game.Missile, 20);
+        this.enemyBulletPool = new game.SpritePool(game.Bullet, 50);
+        this.enemyPool = new game.SpritePool(game.EnemyShip, 50);
         this.meteorPool = new game.SpritePool(game.Meteor, 10);
-        this.explosionPool = new game.SpritePool(game.Explosion, 10);
+        this.explosionPool = new game.SpritePool(game.Explosion, 20);
         this.healthMeter = new game.HealthMeter();
         this.scoreboard = new game.Scoreboard();
         this.lifeBox = new game.LifeBox(this.numLives);
-        //this.addChild(this.heroShip, this.healthMeter, this.scoreboard, this.lifeBox);
-        this.addChild(this.heroShip, this.scoreboard, this.lifeBox);
+        this.addChild(this.heroShip, this.healthMeter, this.scoreboard, this.lifeBox);
+        //this.addChild(this.heroShip, this.scoreboard, this.lifeBox);
     }
     p.setWalls = function() {
         this.leftWall = this.heroShip.getBounds().width / 2;
@@ -176,23 +179,55 @@
          * UPDATE FUNCTIONS
          *
          */
-    p.updateStars = function() {
-        var i, star, velY, speed, nextY;
-        var len = this.stars.length;
-        for (i = 0; i < len; i++) {
-            star = this.stars[i];
-            velY = star.speed * this.delta / 1000;
-            nextY = star.y + velY;
-            if (nextY > screen_height) {
-                nextY = -10
-            }
-            star.nextY = nextY;
+    p.updateBackground = function() {
+        switch (this.level) {
+            case 1:
+                if (this.bg.y >= -7360) {
+                    this.bg.y = -10240;
+                }
+
+                break;
+            case 2:
+                if (this.bg.y <= -6560) {
+                    this.bg.y = -6560;
+                }
+                if (this.bg.y >= -3680) {
+                    this.bg.y = -6560;
+                }
+                break;
+            case 3:
+                if (this.bg.y <= -2880) {
+                    this.bg.y = -2880;
+                }
+                if (this.bg.y >= 0) {
+                    this.bg.y = -2880;
+                }
+                break;
         }
+        this.bg.y += 5;
     }
+
     p.updateHeroShip = function() {
         var velocity = this.heroShip.speed * this.delta / 1000;
         var nextX = this.heroShip.x;
         var nextY = this.heroShip.y;
+
+        if (this.levelup) {
+            this.deleteHeroBullets();
+            this.deleteEnemyBullets();
+            this.deleteEnemies();
+            this.deleteMeteors();
+            this.enemyLastSpawnTime += 3000;
+            this.meteorLastSpawnTime += 3000;
+
+            this.heroShip.playTransition();
+            
+            this.deleteEnemyBullets();
+            this.deleteEnemyBullets();
+            this.resetGame();
+            this.levelup = false;
+        }
+
         if (this.leftKeyDown) {
             nextX -= velocity;
             if (nextX < this.leftWall) {
@@ -233,27 +268,32 @@
         }
     }
     p.updateEnemies = function() {
-        var enemy, i, velY;
+        var enemy, i;
         var len = this.enemies.length - 1;
         for (i = len; i >= 0; i--) {
             enemy = this.enemies[i];
-            velY = enemy.speed * this.delta / 1000;
-            enemy.nextY = enemy.y + velY / 3;
 
-            if (enemy.nextX < (screen_width - enemy.regX)) {
+            var nextX = enemy.x + enemy.velx;
+            var nextY = enemy.y + enemy.vely;
 
-                enemy.nextX = enemy.x + velY;
-            } else if (enemy.nextX > (screen_width - enemy.regX)) {
-                enemy.nextX = enemy.x - velY;
+            if (nextX < (this.leftWall + 20)) {
+                nextX = this.leftWall + 20;
+                enemy.velx *= -1;
+            } else if (nextX > (this.rightWall - 20)) {
+                nextX = this.rightWall - 20;
+                enemy.velx *= -1;
             }
 
-
-            if (enemy.nextX > (screen_height - enemy.regX)) {
-                enemy.reset();
-                this.enemyPool.returnSprite(enemy);
-                this.removeChild(enemy);
-                this.enemies.splice(i, 1);
+            if (nextY > (this.floor / 1.5)) {
+                nextY = this.floor / 1.5;
+                enemy.vely *= -1;
+            } else if (nextY < (this.ceiling)) {
+                nextY = this.ceiling;
+                enemy.vely *= -1;
             }
+
+            enemy.nextX = nextX;
+            enemy.nextY = nextY;
         }
     }
     p.updateBoss = function() {
@@ -519,7 +559,7 @@
                 bullet.shouldDie = true;
                 this.heroShip.takeDamage();
                 this.heroShip.shouldDie;
-                this.healthMeter.takeDamage(10);
+                this.healthMeter.takeDamage(20.1);
             }
         }
     }
@@ -575,6 +615,7 @@
             this.lifeBox.removeLife();
             this.betweenLevels = true;
             this.deleteHeroBullets();
+            this.healthMeter.reset();
         }
     }
     p.checkBoss = function() {
@@ -582,8 +623,19 @@
             this.boss.explode();
             this.spawnEnemyExplosion(this.boss.x, this.boss.y);
             this.bossLastSpawnPoints = this.scoreboard.score;
-            this.dispose();
-            this.dispatchEvent(game.GameStateEvents.LEVEL_2);
+
+            this.level++; //level up
+            this.levelup = true; //to play trasition
+            this.healthMeter.reset(); //restore health meter to full
+            this.enemySpawnWaiter -= 130 * this.level; //enemy spawn faster than previous level
+            this.bossSpawnWaiter += 150 * this.level; //more score needed before next boss spawn
+
+
+            if (this.nextBossShip >= 3) {
+                game.score = this.scoreboard.getScore();
+                this.dispose();
+                this.dispatchEvent(game.GameStateEvents.GAME_WIN);
+            }
         }
     }
     p.checkGame = function(e) {
@@ -618,28 +670,74 @@
                 this.removeChild(p.collectMissile);
                 p.collectMissile = null;
                 this.heroShip.makeInvincible(true);
-                p.deleteHeroBullets();
+                this.deleteHeroBullets();
             }
         }
     }
     p.deleteHeroBullets = function() {
-            var b, bullet;
-            for (b in this.heroBullets) {
-                bullet = this.heroBullets[b];
-                this.removeChild(bullet);
-                bullet.reset();
-                this.heroBullets.splice(i, 1);
-            }
-
-            this.heroBulletPool = new game.SpritePool(game.Bullet, 20);
-            this.heroMissilePool = new game.SpritePool(game.Missile, 10);
-            //this.heroBullets.empty();
+        var b, bullet;
+        for (b in this.heroBullets) {
+            bullet = this.heroBullets[b];
+            this.removeChild(bullet);
+            bullet.reset();
+            this.heroBullets.splice(b, 1);
         }
-        /*
-         *
-         * SPAWN FUNCTION
-         *
-         */
+
+        //this.heroBulletPool = new game.SpritePool(game.Bullet, 20);
+        //this.heroMissilePool = new game.SpritePool(game.Missile, 20);
+    }
+
+    p.deleteEnemyBullets = function() {
+        var b, bullet;
+        for (b in this.enemyBullets) {
+            bullet = this.enemyBullets[b];
+            this.removeChild(bullet);
+            bullet.reset();
+            this.enemyBullets.splice(b, 1);
+        }
+
+        //this.enemyBulletPool = new game.SpritePool(game.Bullet, 50);
+    }
+
+    p.deleteEnemies = function() {
+        var enemy, i;
+        var len = this.enemies.length - 1;
+        for (i = len; i >= 0; i--) {
+            enemy = this.enemies[i];
+            this.enemies.splice(i, 1);
+            this.removeChild(enemy);
+            enemy.reset();
+        }
+    }
+
+    p.deleteMeteors = function() {
+        var meteor, i;
+        var len = this.meteors.length - 1;
+        for (i = len; i >= 0; i--) {
+            meteor = this.meteors[i];
+            this.meteors.splice(i, 1);
+            this.removeChild(meteor);
+            meteor.reset();
+        }
+    }
+
+    p.resetGame = function() {
+        this.enemies = [];
+        this.enemyBullets = [];
+
+        this.heroBulletPool = new game.SpritePool(game.Bullet, 20);
+        this.heroMissilePool = new game.SpritePool(game.Missile, 20);
+        this.enemyBulletPool = new game.SpritePool(game.Bullet, 50);
+        this.enemyPool = new game.SpritePool(game.EnemyShip, 50);
+        this.meteorPool = new game.SpritePool(game.Meteor, 10);
+        this.explosionPool = new game.SpritePool(game.Explosion, 20);
+    }
+
+    /*
+     *
+     * SPAWN FUNCTION
+     *
+     */
     p.spawnMeteor = function() {
         var meteor = this.meteorPool.getSprite();
         meteor.y = -meteor.getBounds().height;
@@ -647,14 +745,18 @@
         this.addChild(meteor);
         this.meteors.push(meteor);
     }
+
     p.spawnEnemyShip = function() {
         var enemy = this.enemyPool.getSprite();
-        enemy.y = enemy.getBounds().height;
-        //enemy.x = Utils.getRandomNumber(enemy.getBounds().width, screen_width - enemy.getBounds().width);
-        enemy.x = 0;
+        enemy.y = 0;
+        enemy.x = Utils.getRandomNumber(enemy.getBounds().width, screen_width - enemy.getBounds().width);
+
+        createjs.Tween.get(enemy).to({ y: 150 }, 2000);
+
         this.addChild(enemy);
         this.enemies.push(enemy);
     }
+
     p.spawnBossShip = function() {
         if (this.nextBossShip < 4) {
             this.boss = new game.BossShip(this.nextBossShip);
@@ -672,7 +774,7 @@
         bullet.currentAnimationFrame = 1;
         bullet.y = boss.y;
         bullet.x = boss.x;
-        this.addChildAt(bullet, 0);
+        this.addChild(bullet);
         this.enemyBullets.push(bullet);
     }
     p.spawnEnemyBullet = function(enemy) {
@@ -680,7 +782,7 @@
         bullet.currentAnimationFrame = 1;
         bullet.y = enemy.y;
         bullet.x = enemy.x;
-        this.addChildAt(bullet, 0);
+        this.addChild(bullet);
         this.enemyBullets.push(bullet);
     }
     p.spawnHeroBullet = function() {
@@ -692,9 +794,8 @@
         }
         bullet.x = this.heroShip.x;
         bullet.y = this.heroShip.y - this.heroShip.getBounds().height / 2;
-        this.addChildAt(bullet, 0);
+        this.addChild(bullet);
         this.heroBullets.push(bullet);
-        createjs.Sound.play(game.assets.BULLET);
     }
     p.spawnEnemyExplosion = function(x, y) {
         var explosion = this.explosionPool.getSprite();
@@ -711,25 +812,27 @@
         this.explosionPool.returnSprite(explosion);
     }
     p.spawnCollectMissile = function(x, y) {
-            if ((p.collectMissile == null) && (p.heroBulletType == 1)) {
-                var num = Utils.getRandomNumber(0, 5) + 1;
-                num = 2;
-                if (num == 1) {
-                    p.collectMissile = new game.Missile();
-                    p.collectMissile.x = x;
-                    p.collectMissile.y = y;
-                    this.addChild(p.collectMissile);
-                    p.collectMissileTime = 1;
-                }
+        if ((p.collectMissile == null) && (p.heroBulletType == 1)) {
+            var num = Utils.getRandomNumber(0, 5) + 1;
+            //num = 2;
+            if (num == 1) {
+                p.collectMissile = new game.Missile();
+                p.collectMissile.x = x;
+                p.collectMissile.y = y;
+                this.addChild(p.collectMissile);
+                p.collectMissileTime = 1;
             }
         }
-        /*
-         *
-         * GAME LOOP
-         *
-         */
+    }
+
+
+    /*
+     *
+     * GAME LOOP
+     *
+     */
     p.update = function() {
-        this.updateStars();
+        this.updateBackground();
         this.updateHeroShip()
         this.updateMeteors();
         this.updateEnemies();
@@ -748,12 +851,15 @@
     }
     p.run = function(tickEvent) {
         this.delta = tickEvent.delta;
+
         if (!this.betweenLevels) {
             this.update();
             this.render();
-            //this.checkForMeteorSpawn(tickEvent.time);
-            this.checkForEnemySpawn(tickEvent.time);
-            this.checkForBossSpawn(tickEvent.time);
+            if (!this.levelup) {
+                this.checkForMeteorSpawn(tickEvent.time);
+                this.checkForEnemySpawn(tickEvent.time);
+                this.checkForBossSpawn(tickEvent.time);
+            }
             this.checkForEnemyFire(tickEvent.time);
             this.checkForBossFire(tickEvent.time);
             this.checkHeroBullets();

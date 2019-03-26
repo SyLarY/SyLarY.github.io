@@ -2,30 +2,41 @@
 
     window.game = window.game || {}
 
-    function GameOver() {
+    function GameWin() {
         this.initialize();
     }
 
-    var p = GameOver.prototype = new createjs.Container();
+    var p = GameWin.prototype = new createjs.Container();
 
     p.Container_initialize = p.initialize;
 
     p.initialize = function () {
         this.Container_initialize();
         createjs.Sound.stop();
+        this.finalAnimation();
+    }
+
+    p.finalAnimation = function (){
+        var explosion = new game.FinalExplosion();        
+        explosion.x = 300;
+        explosion.y = 400;
+        createjs.Tween.get(explosion).to({ y: 200 }, 4000)
+             .call(this.addComponents, null, this);
+        this.addChild(explosion); 
+    }
+    p.addComponents = function (){
         this.addMessage();
         this.addScore();
         this.addButton();
     }
+
     p.addMessage = function () {
-        var msg = new createjs.Sprite(spritesheet, 'gameOver');
-        msg.regX = msg.getBounds().width / 2;
-        msg.regY = msg.getBounds().height / 2;
-        msg.x = screen_width / 2;
-        msg.y = 250;
-        msg.scaleX = msg.scaleY = 0;
-        createjs.Tween.get(msg).to({scaleX:1, scaleY:1, rotation:360}, 500);
-        this.addChild(msg);
+        var text = new createjs.Text("You win!!!", "40px Showcard Gothic", "#66ff66");
+        text.textBaseline = "middle";
+        text.textAlign = "center";
+        text.x = stage.canvas.height / 2;
+        text.y = stage.canvas.height / 3;
+        this.addChild(text);
     }
     p.addScore = function () {
         var scorePoint = {x:330, y:310};
@@ -59,6 +70,6 @@
         this.dispatchEvent(game.GameStateEvents.MAIN_MENU);
     }
 
-    window.game.GameOver = GameOver;
+    window.game.GameWin = GameWin;
 
 }(window));

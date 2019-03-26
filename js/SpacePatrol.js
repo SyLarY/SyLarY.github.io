@@ -68,11 +68,8 @@
             case game.GameStates.GAME_OVER:
                 this.currentGameStateFunction = this.gameStateGameOver;
                 break;
-            case game.GameStates.LEVEL_2:
-                this.currentGameStateFunction = this.gameStateLevel2;
-                break;
-            case game.GameStates.LEVEL_3:
-                this.currentGameStateFunction = this.gameStateLevel3;
+            case game.GameStates.GAME_WIN:
+                this.currentGameStateFunction = this.gameStateGameWin;
                 break;
         }
     }
@@ -89,7 +86,6 @@
         }
     }
     p.gameStateMainMenu = function(tickEvent) {
-        createjs.Sound.stop();
         var scene = new game.GameMenu();
         scene.on(game.GameStateEvents.GAME, this.onStateEvent, this, true, { state: game.GameStates.GAME });
         stage.addChild(scene);
@@ -101,17 +97,7 @@
     p.gameStateGame = function(tickEvent) {
         createjs.Sound.stop();
         var scene = new game.Game();
-        scene.on(game.GameStateEvents.LEVEL_2, this.onStateEvent, this, true, { state: game.GameStates.LEVEL_2 });
-        scene.on(game.GameStateEvents.GAME_OVER, this.onStateEvent, this, true, { state: game.GameStates.GAME_OVER });
-        stage.addChild(scene);
-        this.disposeCurrentScene()
-        this.currentScene = scene;
-        this.changeState(game.GameStates.RUN_SCENE);
-    }
-    p.gameStateLevel2 = function(tickEvent) {
-        createjs.Sound.stop();
-        var scene = new game.Level2();
-        scene.on(game.GameStateEvents.LEVEL_3, this.onStateEvent, this, true, { state: game.GameStates.LEVEL_3 });
+        scene.on(game.GameStateEvents.GAME_WIN, this.onStateEvent, this, true, { state: game.GameStates.GAME_WIN });
         scene.on(game.GameStateEvents.GAME_OVER, this.onStateEvent, this, true, { state: game.GameStates.GAME_OVER });
         stage.addChild(scene);
         this.disposeCurrentScene()
@@ -119,16 +105,15 @@
         this.changeState(game.GameStates.RUN_SCENE);
     }
 
-    p.gameStateLevel3 = function(tickEvent) {
-        createjs.Sound.stop();
-        var scene = new game.Level3();
+    p.gameStateGame = function(tickEvent) {
+        var scene = new game.Game();
+        scene.on(game.GameStateEvents.GAME_WIN, this.onStateEvent, this, true, { state: game.GameStates.GAME_WIN });
         scene.on(game.GameStateEvents.GAME_OVER, this.onStateEvent, this, true, { state: game.GameStates.GAME_OVER });
         stage.addChild(scene);
         this.disposeCurrentScene()
         this.currentScene = scene;
         this.changeState(game.GameStates.RUN_SCENE);
     }
-
     p.gameStateGameOver = function(tickEvent) {
         createjs.Sound.stop();
         var scene = new game.GameOver();
@@ -139,7 +124,15 @@
         this.currentScene = scene;
         this.changeState(game.GameStates.RUN_SCENE);
     }
-
+    p.gameStateGameWin = function(tickEvent) {
+        var scene = new game.GameWin();
+        scene.on(game.GameStateEvents.MAIN_MENU, this.onStateEvent, this, true, { state: game.GameStates.MAIN_MENU });
+        scene.on(game.GameStateEvents.GAME, this.onStateEvent, this, true, { state: game.GameStates.GAME });
+        stage.addChild(scene);
+        this.disposeCurrentScene();
+        this.currentScene = scene;
+        this.changeState(game.GameStates.RUN_SCENE);
+    }
     p.gameStateRunScene = function(tickEvent) {
         if (this.currentScene.run) {
             this.currentScene.run(tickEvent);

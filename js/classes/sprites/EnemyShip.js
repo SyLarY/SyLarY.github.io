@@ -17,18 +17,22 @@
     p.fireDelay = 2000;
 
     p.speed = 150;
-    p.nextY = null;
-    p.nextX = null;
+    p.nextY = 0;
+    p.nextX = 0;
     p.shouldDie = false;
+
+    p.velx = 2;
+    p.vely = 2;
 
     p.initialize = function(startX) {
         this.type = Utils.getRandomNumber(0, 4) + 1;
 
         //this.HP = this.type * 3;
         this.HP = this.type;
+        this.velx = this.type * 2;
+        this.vely = this.type * 2;
 
-        //this.points = this.type * 10;
-        this.points = 200;
+        this.points = this.type * 10;
         this.Sprite_initialize(spritesheet, "enemy" + this.type + "Idle");
         this.regX = this.getBounds().width / 2;
         this.regY = this.getBounds().height / 2;
